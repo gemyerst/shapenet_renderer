@@ -1,6 +1,11 @@
 import os
-import util
 import bpy
+import util
+import json
+import math
+#in blender: import sys
+#packages_path = "C:/Users/G/GitHub/shapenet_renderer" + "util.py"
+#sys.path.insert(0, packages_path )
 
 
 class BlenderInterface():
@@ -12,47 +17,39 @@ class BlenderInterface():
 
         # Deselect all. All new object added to the scene will automatically selected.
         self.blender_renderer = bpy.context.scene.render
-        self.blender_renderer.use_antialiasing = False
         self.blender_renderer.resolution_x = resolution
         self.blender_renderer.resolution_y = resolution
         self.blender_renderer.resolution_percentage = 100
         self.blender_renderer.image_settings.file_format = 'PNG'  # set output format to .png
 
-        self.blender_renderer.alpha_mode = 'SKY'
-
         world = bpy.context.scene.world
-        world.horizon_color = background_color
-        world.light_settings.use_environment_light = True
-        world.light_settings.environment_color = 'SKY_COLOR'
-        world.light_settings.environment_energy = 1.
 
-        lamp1 = bpy.data.lamps['Lamp']
+        lamp1 = bpy.data.lights['Light']
         lamp1.type = 'SUN'
-        lamp1.shadow_method = 'NOSHADOW'
-        lamp1.use_specular = False
-        lamp1.energy = 1.
+        #lamp1.shadow_method = 'NOSHADOW'
+        lamp1.specular_factor = 0.0
+        #lamp1.energy = 1.
 
-        bpy.ops.object.lamp_add(type='SUN')
-        lamp2 = bpy.data.lamps['Sun']
-        lamp2.shadow_method = 'NOSHADOW'
-        lamp2.use_specular = False
-        lamp2.energy = 1.
-        bpy.data.objects['Sun'].rotation_euler = bpy.data.objects['Lamp'].rotation_euler
+        bpy.ops.object.light_add(type='SUN')
+        lamp2 = bpy.data.lights['Sun']
+        #lamp2.shadow_method = 'NOSHADOW'
+        lamp2.specular_factor = 0.0
+        #lamp2.energy = 1.
+        bpy.data.objects['Sun'].rotation_euler = bpy.data.objects['Light'].rotation_euler
         bpy.data.objects['Sun'].rotation_euler[0] += 180
 
-        bpy.ops.object.lamp_add(type='SUN')
-        lamp2 = bpy.data.lamps['Sun.001']
-        lamp2.shadow_method = 'NOSHADOW'
-        lamp2.use_specular = False
-        lamp2.energy = 0.3
-        bpy.data.objects['Sun.001'].rotation_euler = bpy.data.objects['Lamp'].rotation_euler
+        bpy.ops.object.light_add(type='SUN')
+        lamp2 = bpy.data.lights['Sun.001']
+        #lamp2.shadow_method = 'NOSHADOW'
+        lamp2.specular_factor = 0.0
+        #lamp2.energy = 0.3
+        bpy.data.objects['Sun.001'].rotation_euler = bpy.data.objects['Light'].rotation_euler
         bpy.data.objects['Sun.001'].rotation_euler[0] += 90
 
         # Set up the camera
         self.camera = bpy.context.scene.camera
         self.camera.data.sensor_height = self.camera.data.sensor_width # Square sensor
         util.set_camera_focal_length_in_world_units(self.camera.data, 525./512*resolution) # Set focal length to a common value (kinect)
-
         bpy.ops.object.select_all(action='DESELECT')
 
     def import_mesh(self, fpath, scale=1., object_world_matrix=None):
@@ -77,7 +74,7 @@ class BlenderInterface():
         # Disable transparency & specularities
         M = bpy.data.materials
         for i in range(len(M)):
-            M[i].use_transparency = False
+            M[i].show_transparent_back = False
             M[i].specular_intensity = 0.0
 
         # Disable texture interpolation
@@ -91,6 +88,13 @@ class BlenderInterface():
             except:
                 continue
 
+    @staticmethod
+    def listify_matrix(matrix): 
+        matrix_list = []
+        for row in matrix:
+            matrix_list.append(list(row))
+        return matrix_list
+
     def render(self, output_dir, blender_cam2world_matrices, write_cam_params=False):
 
         if write_cam_params:
@@ -102,6 +106,12 @@ class BlenderInterface():
         else:
             img_dir = output_dir
             util.cond_mkdir(img_dir)
+
+        # Data to store in JSON file
+        out_data = {
+            'camera_angle_x': bpy.data.objects['Camera'].data.angle_x,
+        }
+        out_data['frames'] = []
 
         if write_cam_params:
             K = util.get_calibration_matrix_K_from_blender(self.camera.data)
@@ -132,6 +142,17 @@ class BlenderInterface():
                         for k in range(4):
                             matrix_flat.append(cam2world[j][k])
                     pose_file.write(' '.join(map(str, matrix_flat)) + '\n')
+            
+                #openGL coordinates to .json file
+                frame_data = {
+                    'file_path': pose_dir,
+                    'rotation': math.radians((2*math.pi)/len(blender_cam2world_matrices)),
+                    'transform_matrix': BlenderInterface.listify_matrix(self.camera.matrix_world)
+                }
+                out_data['frames'].append(frame_data)    
+
+        with open(pose_dir + '/' + 'transforms.json', 'w') as out_file:
+            json.dump(out_data, out_file, indent=4)
 
         # Remember which meshes were just imported
         meshes_to_remove = []

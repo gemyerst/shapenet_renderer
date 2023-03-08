@@ -9,7 +9,6 @@ from functools import reduce
 def normalize(vec):
     return vec / (np.linalg.norm(vec, axis=-1, keepdims=True) + 1e-9)
 
-
 # All the following functions follow the opencv convention for camera coordinates.
 def look_at(cam_location, point):
     # Cam points in positive z direction
@@ -40,6 +39,10 @@ def sample_spherical(n, radius=1.):
     xyz = normalize(xyz) * radius
     return xyz
 
+def sample_custom(n, radius=1.):
+    xyz = np.random.normal(size=(n,3))
+    xyz = normalize(xyz) * radius
+    return xyz
 
 def set_camera_focal_length_in_world_units(camera_data, focal_length):
     scene = bpy.context.scene
@@ -81,13 +84,13 @@ def cv_cam2world_to_bcam2world(cv_cam2world):
     cv_cam2world_rot = Matrix(cv_cam2world[:3, :3].tolist())
 
     cv_world2cam_rot = cv_cam2world_rot.transposed()
-    cv_translation = -1. * cv_world2cam_rot * cam_location
+    cv_translation = -1. * cv_world2cam_rot @ cam_location
 
-    blender_world2cam_rot = R_bcam2cv * cv_world2cam_rot
-    blender_translation = R_bcam2cv * cv_translation
+    blender_world2cam_rot = R_bcam2cv @ cv_world2cam_rot
+    blender_translation = R_bcam2cv @ cv_translation
 
     blender_cam2world_rot = blender_world2cam_rot.transposed()
-    blender_cam_location = -1. * blender_cam2world_rot * blender_translation
+    blender_cam_location = -1. * blender_cam2world_rot @ blender_translation
 
     blender_matrix_world = Matrix((
         blender_cam2world_rot[0][:] + (blender_cam_location[0],),
@@ -129,11 +132,11 @@ def get_world2cam_from_blender_cam(cam):
     # Convert camera location to translation vector used in coordinate changes
     # T_world2bcam = -1*R_world2bcam*cam.location
     # Use location from matrix_world to account for constraints:
-    T_world2bcam = -1 * R_world2bcam * location
+    T_world2bcam = -1 * R_world2bcam @ location
 
     # Build the coordinate transform matrix from world to computer vision camera
-    R_world2cv = R_bcam2cv * R_world2bcam
-    T_world2cv = R_bcam2cv * T_world2bcam
+    R_world2cv = R_bcam2cv @ R_world2bcam
+    T_world2cv = R_bcam2cv @ T_world2bcam
 
     # put into 3x4 matrix
     RT = Matrix((

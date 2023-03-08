@@ -1,0 +1,26 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Custom Debug",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/shapenet_spherical_renderer.py",
+            "args": [
+                "--obj_file",
+                "C:/Users/G/Downloads/meshes/obj/tower1.obj",
+                "--output_dir",
+                "C:/Users/G/GitHub/shapenet_renderer/outputs",
+                "--num_observations",
+                "100",
+                "--sphere_radius",
+                "1.2",
+                "--mode",
+                "train"
+                ]
+        }
+    ]
+}

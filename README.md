@@ -4,7 +4,7 @@ from the "Stanford Shapenet Renderer". This code can be used to render datasets 
 
 This code was adapted to function with Blender 3.3.1 in Windows.
 
-To render a batch of ply files in parallel, just make sure to input a directory to a folder instead of a file for mesh_fpath. The path should only contain .obj files.
+To render a batch of ply files in parallel, just make sure to input a directory to a folder instead of a file for mesh_fpath.
 
 Instructions:
 

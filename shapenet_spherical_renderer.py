@@ -1,6 +1,7 @@
 import argparse
 import numpy as np
 import os
+import glob
 import sys
 sys.path.append(os.path.dirname(__file__))
 
@@ -51,6 +52,7 @@ if(argv.mesh_fpath.endswith(".obj")):
 
 else:
     for file in os.listdir(argv.mesh_fpath):
-        renderer.import_mesh(argv.mesh_fpath + file, scale=1., object_world_matrix=obj_pose)
-        renderer.render(instance_dir + file, blender_poses, write_cam_params=True)
+        if file.endswith(".obj"):
+            renderer.import_mesh(argv.mesh_fpath + file, scale=1., object_world_matrix=obj_pose)
+            renderer.render(instance_dir + file, blender_poses, write_cam_params=True)
 

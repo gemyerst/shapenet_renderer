@@ -21,7 +21,7 @@ git clone https://github.com/gemyerst/shapenet_renderer.git
 4. Install the required dependencies
 ```
 pip install numpy
-pip install bpy
+pip install bpy "OR" pip install fake-bpy-module-latest
 ```
 Note: bpy might require additional dependencies to work on your system. See https://pypi.org/project/bpy/
 

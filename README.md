@@ -2,8 +2,17 @@ This is a compact implementation of a batched OBJ- and PLY-renderer in blender. 
 from the "Stanford Shapenet Renderer". This code can be used to render datasets such as the ones used in the
 "Scene Representation Networks" paper.
 
-It assumes blender < 2.8, as it uses the blender-internal renderer.
+This code was adapted to function with Blender 3.3.1 in Windows.
 
-To render a batch of ply files in parallel, use the "find" command in conjunction with xargs:
+To render a batch of ply files in parallel, just make sure to input a directory to a folder instead of a file for mesh_fpath. The path should only contain .obj files.
 
-    find ~/Downloads/02691156/ -name *.ply -print0 | xargs -0 -n1 -P1 -I {} blender --background --python shapenet_spherical_renderer.py -- --output_dir /tmp --mesh_fpath {} --num_observations 50 --sphere_radius 1 --mode=train
+Instructions:
+
+cd to github
+conda create -n blender-render
+conda activate blender-render
+git clone https://github.com/gemyerst/shapenet_renderer.git
+pip install numpy
+pip install bpy
+
+python shapenet_spherical_renderer.py --mesh_fpath "path to obj or directory" --output_dir "file save location" --num_observations 100 --sphere_radius 1.2 --mode "train"

@@ -3,13 +3,12 @@ import bpy
 import util
 import json
 import math
-#in blender: import sys
-#packages_path = "C:/Users/G/GitHub/shapenet_renderer" + "util.py"
-#sys.path.insert(0, packages_path )
+import mathutils
 
+#PLEASE FIND ORIGINAL HERE: https://github.com/vsitzmann/shapenet_renderer
 
 class BlenderInterface():
-    def __init__(self, resolution=128, background_color=(1,1,1)):
+    def __init__(self, resolution=128, background_color=(0,0,0)):
         self.resolution = resolution
 
         # Delete the default cube (default selected)
@@ -23,9 +22,13 @@ class BlenderInterface():
         self.blender_renderer.image_settings.file_format = 'PNG'  # set output format to .png
 
         world = bpy.context.scene.world
+        world.color = background_color
 
         lamp1 = bpy.data.lights['Light']
         lamp1.type = 'SUN'
+        # Enable nodes for the light if necessary
+        #if not lamp1.data.use_nodes:
+        #     lamp1.data.use_nodes = True
         #lamp1.shadow_method = 'NOSHADOW'
         lamp1.specular_factor = 0.0
         #lamp1.energy = 1.
@@ -50,7 +53,36 @@ class BlenderInterface():
         self.camera = bpy.context.scene.camera
         self.camera.data.sensor_height = self.camera.data.sensor_width # Square sensor
         util.set_camera_focal_length_in_world_units(self.camera.data, 525./512*resolution) # Set focal length to a common value (kinect)
+
         bpy.ops.object.select_all(action='DESELECT')
+
+    @staticmethod
+    def transform_mesh(obj):
+        # Get the bounding box dimensions
+        bbox = obj.bound_box[:]
+        dimensions = [(max([bb[i] for bb in bbox]) - min([bb[i] for bb in bbox])) for i in range(3)]
+        max_dim = max(dimensions)
+
+        # Calculate the scale factor needed to make the bounding box 1 unit in size
+        scale_factor = 1.0 / max_dim
+        obj.scale = (scale_factor, scale_factor, scale_factor)
+
+        # Move the object and its bounding box to the world origin
+        new_bbox = [mathutils.Vector(v) for v in bbox]
+        for v in new_bbox:
+            v[0] = (v[0] - obj.location[0]) * scale_factor
+            v[1] = (v[1] - obj.location[1]) * scale_factor
+            v[2] = (v[2] - obj.location[2]) * scale_factor
+
+        # Move the object and its bounding box to the world origin
+        obj.location = (0.0, 0.0, 0.0)
+        for v in new_bbox:
+            v[0] += obj.location[0]
+            v[1] += obj.location[1]
+            v[2] += obj.location[2]
+
+        return obj
+
 
     def import_mesh(self, fpath, scale=1., object_world_matrix=None):
         ext = os.path.splitext(fpath)[-1]
@@ -59,17 +91,19 @@ class BlenderInterface():
         elif ext == '.ply':
             bpy.ops.import_mesh.ply(filepath=str(fpath))
 
-        obj = bpy.context.selected_objects[0]
+        obj_in = bpy.context.selected_objects[0]
         util.dump(bpy.context.selected_objects)
 
         if object_world_matrix is not None:
-            obj.matrix_world = object_world_matrix
+            obj_in.matrix_world = object_world_matrix
 
         bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
-        obj.location = (0., 0., 0.) # center the bounding box!
+        
+        obj = BlenderInterface.transform_mesh(obj_in)
+        #obj.location = (0., 0., 0.) # center the bounding box!
 
-        if scale != 1.:
-            bpy.ops.transform.resize(value=(scale, scale, scale))
+        #if scale != 1.:
+        #    bpy.ops.transform.resize(value=(scale, scale, scale))
 
         # Disable transparency & specularities
         M = bpy.data.materials
@@ -130,6 +164,8 @@ class BlenderInterface():
 
             # Render the color image
             self.blender_renderer.filepath = os.path.join(img_dir, '%06d.png'%i)
+            bpy.context.scene.render.dither_intensity = 0.0
+            bpy.context.scene.render.film_transparent = False
             bpy.ops.render.render(write_still=True)
 
             if write_cam_params:
@@ -145,7 +181,7 @@ class BlenderInterface():
             
                 #openGL coordinates to .json file
                 frame_data = {
-                    'file_path': pose_dir,
+                    'file_path': pose_dir + '%06d.txt'%i,
                     'rotation': math.radians((2*math.pi)/len(blender_cam2world_matrices)),
                     'transform_matrix': BlenderInterface.listify_matrix(self.camera.matrix_world)
                 }

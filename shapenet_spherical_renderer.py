@@ -11,8 +11,6 @@ packages_path = "C:/Users/G/GitHub/shapenet_renderer"
 sys.path.insert(0, packages_path + "util.py")
 sys.path.insert(0, packages_path + "blender_interface")
 
-path = packages_path + "outputs"
-
 if(__name__== "__main__"):
     p = argparse.ArgumentParser(description='Renders given obj file by rotation a camera around it.')
     p.add_argument('--mesh_fpath', type=str, required=True, help='The path to the obj file to render.')
@@ -24,7 +22,10 @@ if(__name__== "__main__"):
     argv = p.parse_args()
     #argv = sys.argv[sys.argv.index("--") + 1:]
 
-renderer = blender_interface.BlenderInterface(resolution=128)
+instance_name = argv.mesh_fpath.split('/')[-3]
+instance_dir = os.path.join(argv.output_dir, instance_name)
+
+renderer = blender_interface.BlenderInterface(resolution=128) #CHANGE RESOLUTION HERE
 
 if argv.mode == 'train':
     cam_locations = util.sample_spherical(argv.num_observations, argv.sphere_radius)
@@ -44,5 +45,12 @@ hom_coords = np.array([[0., 0., 0., 1.]]).reshape(1, 4)
 obj_pose = np.concatenate((rot_mat, obj_location.reshape(3,1)), axis=-1)
 obj_pose = np.concatenate((obj_pose, hom_coords), axis=0)
 
-renderer.import_mesh(argv.mesh_fpath, scale=1., object_world_matrix=obj_pose)
-renderer.render(packages_path, blender_poses, write_cam_params=True)
+if(argv.mesh_fpath.endswith(".obj")):
+    renderer.import_mesh(argv.mesh_fpath, scale=1., object_world_matrix=obj_pose)
+    renderer.render(instance_dir, blender_poses, write_cam_params=True)
+
+else:
+    for file in os.listdir(argv.mesh_fpath):
+        renderer.import_mesh(argv.mesh_fpath + file, scale=1., object_world_matrix=obj_pose)
+        renderer.render(instance_dir + file, blender_poses, write_cam_params=True)
+

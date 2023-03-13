@@ -4,18 +4,20 @@ import util
 import json
 import math
 import mathutils
+import numpy as np
+from PIL import Image
 
 #PLEASE FIND ORIGINAL HERE: https://github.com/vsitzmann/shapenet_renderer
 
 class BlenderInterface():
-    def __init__(self, resolution=128, background_color=(0,0,0)):
+    def __init__(self, resolution=128, background_color=(1,1,1)):
         self.resolution = resolution
 
         # Delete the default cube (default selected)
         bpy.ops.object.delete()
 
         # Deselect all. All new object added to the scene will automatically selected.
-        self.blender_renderer = bpy.context.scene.render
+        self.blender_renderer = bpy.                                                                                                                                                                                                                                                                                                                                                                                         context.scene.render
         self.blender_renderer.resolution_x = resolution
         self.blender_renderer.resolution_y = resolution
         self.blender_renderer.resolution_percentage = 100
@@ -26,18 +28,19 @@ class BlenderInterface():
 
         lamp1 = bpy.data.lights['Light']
         lamp1.type = 'SUN'
+        lamp1
         # Enable nodes for the light if necessary
         #if not lamp1.data.use_nodes:
         #     lamp1.data.use_nodes = True
         #lamp1.shadow_method = 'NOSHADOW'
         lamp1.specular_factor = 0.0
-        #lamp1.energy = 1.
+        lamp1.energy = 1.
 
         bpy.ops.object.light_add(type='SUN')
         lamp2 = bpy.data.lights['Sun']
         #lamp2.shadow_method = 'NOSHADOW'
         lamp2.specular_factor = 0.0
-        #lamp2.energy = 1.
+        lamp2.energy = 1.
         bpy.data.objects['Sun'].rotation_euler = bpy.data.objects['Light'].rotation_euler
         bpy.data.objects['Sun'].rotation_euler[0] += 180
 
@@ -45,7 +48,7 @@ class BlenderInterface():
         lamp2 = bpy.data.lights['Sun.001']
         #lamp2.shadow_method = 'NOSHADOW'
         lamp2.specular_factor = 0.0
-        #lamp2.energy = 0.3
+        lamp2.energy = 0.3
         bpy.data.objects['Sun.001'].rotation_euler = bpy.data.objects['Light'].rotation_euler
         bpy.data.objects['Sun.001'].rotation_euler[0] += 90
 
@@ -100,10 +103,6 @@ class BlenderInterface():
         bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
         
         obj = BlenderInterface.transform_mesh(obj_in)
-        #obj.location = (0., 0., 0.) # center the bounding box!
-
-        #if scale != 1.:
-        #    bpy.ops.transform.resize(value=(scale, scale, scale))
 
         # Disable transparency & specularities
         M = bpy.data.materials
@@ -163,10 +162,19 @@ class BlenderInterface():
                 continue
 
             # Render the color image
-            self.blender_renderer.filepath = os.path.join(img_dir, '%06d.png'%i)
+            image_name = os.path.join(img_dir, '%06d.png'%i)
+            self.blender_renderer.filepath = image_name
             bpy.context.scene.render.dither_intensity = 0.0
-            bpy.context.scene.render.film_transparent = False
+            bpy.context.scene.render.film_transparent = True
             bpy.ops.render.render(write_still=True)
+
+            # add a whitebackground to the transparent png
+            # when rendering, the tone of the white background depends on the lighting
+            # this ensures a white background every time
+            image = Image.open(image_name).convert("RGBA")
+            new_image = Image.new("RGBA", image.size, "WHITE")
+            new_image.paste(image, mask=image)
+            new_image.save(image_name, "PNG")
 
             if write_cam_params:
                 # Write out camera pose
@@ -187,7 +195,7 @@ class BlenderInterface():
                 }
                 out_data['frames'].append(frame_data)    
 
-        with open(pose_dir + '/' + 'transforms.json', 'w') as out_file:
+        with open(output_dir + '/' + 'transforms.json', 'w') as out_file:
             json.dump(out_data, out_file, indent=4)
 
         # Remember which meshes were just imported

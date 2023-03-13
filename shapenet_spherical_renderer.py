@@ -54,5 +54,6 @@ else:
     for file in os.listdir(argv.mesh_fpath):
         if file.endswith(".obj"):
             renderer.import_mesh(argv.mesh_fpath + file, scale=1., object_world_matrix=obj_pose)
-            renderer.render(instance_dir + file, blender_poses, write_cam_params=True)
+            folder_name = file[:-4]
+            renderer.render(instance_dir + folder_name, blender_poses, write_cam_params=True)
 

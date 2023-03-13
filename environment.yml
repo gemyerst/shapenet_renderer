@@ -1,0 +1,13 @@
+name: shapenet_renderer
+
+channels:
+  - defaults
+  - conda-forge
+
+dependencies:
+  - python>=3.8
+  - blender=3.3.1
+  - numpy
+  - pip
+  - pip:
+    - bpy

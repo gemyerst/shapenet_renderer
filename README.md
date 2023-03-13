@@ -18,12 +18,13 @@ conda activate blender-render
 ```
 git clone https://github.com/gemyerst/shapenet_renderer.git
 ```
-4. Install the required dependencies
+4. Install the required dependencies:
 ```
 pip install numpy
 pip install bpy
+pip install pillow
 ```
-Note: bpy might require additional dependencies to work on your system. See https://pypi.org/project/bpy/
+Note: bpy might require additional dependencies to work on your system. See https://pypi.org/project/bpy/2.82.1/
 
 5. Run the Repository.
 To render a batch of PLY files in parallel, make sure to input a directory path instead of a file path for --mesh_fpath.
@@ -34,6 +35,9 @@ For example:
 ```
 python shapenet_spherical_renderer.py --mesh_fpath "path to obj or directory" --output_dir "file save location" --num_observations 100 --sphere_radius 1.2 --mode "train"
 ```
+
+
+If you are getting an error installing bpy, install OpenSSL: https://chocolatey.org/install (windows)
 
 ##License
 This code is licensed under the MIT license. Please see the LICENSE file for more information.

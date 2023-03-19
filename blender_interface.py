@@ -6,6 +6,7 @@ import math
 import mathutils
 import numpy as np
 from PIL import Image
+import random
 
 #PLEASE FIND ORIGINAL HERE: https://github.com/vsitzmann/shapenet_renderer
 
@@ -86,15 +87,42 @@ class BlenderInterface():
 
         return obj
 
+    @staticmethod
+    def newMaterial(id):
+        mat = bpy.data.materials.get(id)
 
+        if mat is None:
+            mat = bpy.data.materials.new(name=id)
+
+        mat.use_nodes = True
+
+        if mat.node_tree:
+            mat.node_tree.links.clear()
+            mat.node_tree.nodes.clear()
+        return mat
+    
     def import_mesh(self, fpath, scale=1., object_world_matrix=None):
         ext = os.path.splitext(fpath)[-1]
         if ext == '.obj':
             bpy.ops.import_scene.obj(filepath=str(fpath), split_mode='OFF')
         elif ext == '.ply':
             bpy.ops.import_mesh.ply(filepath=str(fpath))
+        elif ext == '.fbx':
+            bpy.ops.import_scene.fbx(filepath=str(fpath))
 
+
+        bpy.context.selected_objects
+
+        mesh_objects = [m for m in bpy.context.scene.objects if m.type == 'MESH']
+        for mesh in mesh_objects:
+            #Select all mesh objects
+            mesh.select_set(state=True)
+            #Makes one active
+            bpy.context.view_layer.objects.active = mesh
+
+        bpy.ops.object.join()
         obj_in = bpy.context.selected_objects[0]
+
         util.dump(bpy.context.selected_objects)
 
         if object_world_matrix is not None:
@@ -106,9 +134,12 @@ class BlenderInterface():
 
         # Disable transparency & specularities
         M = bpy.data.materials
+
+
         for i in range(len(M)):
             M[i].show_transparent_back = False
             M[i].specular_intensity = 0.0
+            #M[i] = mat
 
         # Disable texture interpolation
         T = bpy.data.textures
@@ -174,6 +205,7 @@ class BlenderInterface():
             image = Image.open(image_name).convert("RGBA")
             new_image = Image.new("RGBA", image.size, "WHITE")
             new_image.paste(image, mask=image)
+            #bw = new_image.convert("L")
             new_image.save(image_name, "PNG")
 
             if write_cam_params:
@@ -189,7 +221,7 @@ class BlenderInterface():
             
                 #openGL coordinates to .json file
                 frame_data = {
-                    'file_path': pose_dir + '%06d.txt'%i,
+                    'file_path': "train\\" + '%06d.txt'%i,
                     'rotation': math.radians((2*math.pi)/len(blender_cam2world_matrices)),
                     'transform_matrix': BlenderInterface.listify_matrix(self.camera.matrix_world)
                 }

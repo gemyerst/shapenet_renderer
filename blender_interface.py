@@ -27,6 +27,7 @@ class BlenderInterface():
         world = bpy.context.scene.world
         world.color = background_color
 
+        # OWN CODE ADJUSTMENTS TO ENABLE FUNCTIONALITY IN NEW BLENDER VERSION
         lamp1 = bpy.data.lights['Light']
         lamp1.type = 'SUN'
         lamp1
@@ -61,7 +62,7 @@ class BlenderInterface():
         bpy.ops.object.select_all(action='DESELECT')
 
     @staticmethod
-    def transform_mesh(obj):
+    def transform_mesh(obj): #DEF IS OWN CODE
         # Get the bounding box dimensions
         bbox = obj.bound_box[:]
         dimensions = [(max([bb[i] for bb in bbox]) - min([bb[i] for bb in bbox])) for i in range(3)]
@@ -101,6 +102,7 @@ class BlenderInterface():
             mat.node_tree.nodes.clear()
         return mat
     
+    #OWN CODE
     def import_mesh(self, fpath, scale=1., object_world_matrix=None):
         ext = os.path.splitext(fpath)[-1]
         if ext == '.obj':
@@ -152,7 +154,7 @@ class BlenderInterface():
             except:
                 continue
 
-    @staticmethod
+    @staticmethod #OWN CODE
     def listify_matrix(matrix): 
         matrix_list = []
         for row in matrix:
@@ -199,7 +201,7 @@ class BlenderInterface():
             bpy.context.scene.render.film_transparent = True
             bpy.ops.render.render(write_still=True)
 
-            # add a whitebackground to the transparent png
+            # add a whitebackground to the transparent png THIS IS OWN CODE
             # when rendering, the tone of the white background depends on the lighting
             # this ensures a white background every time
             image = Image.open(image_name).convert("RGBA")
@@ -219,7 +221,8 @@ class BlenderInterface():
                             matrix_flat.append(cam2world[j][k])
                     pose_file.write(' '.join(map(str, matrix_flat)) + '\n')
             
-                #openGL coordinates to .json file
+
+                #openGL coordinates to .json file - OWN CODE
                 frame_data = {
                     'file_path': "train\\" + '%06d.txt'%i,
                     'rotation': math.radians((2*math.pi)/len(blender_cam2world_matrices)),

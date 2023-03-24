@@ -23,7 +23,7 @@ if(__name__== "__main__"):
     argv = p.parse_args()
     #argv = sys.argv[sys.argv.index("--") + 1:]
 
-instance_name = (argv.mesh_fpath.split('/')[-1]).split(".")[-2]
+instance_name = (argv.mesh_fpath.split('/')[-1]).split(".")[0] #OWN CODE
 instance_dir = os.path.join(argv.output_dir, instance_name)
 
 renderer = blender_interface.BlenderInterface(resolution=128) #CHANGE RESOLUTION HERE
@@ -46,13 +46,15 @@ hom_coords = np.array([[0., 0., 0., 1.]]).reshape(1, 4)
 obj_pose = np.concatenate((rot_mat, obj_location.reshape(3,1)), axis=-1)
 obj_pose = np.concatenate((obj_pose, hom_coords), axis=0)
 
-if(argv.mesh_fpath.endswith(".fbx")):
+
+#OWN CODE TO AUTOMATE ALL OBJECTS IN A FOLDER
+if(argv.mesh_fpath.endswith(".obj") or argv.mesh_fpath.endswith(".fbx")or argv.mesh_fpath.endswith(".ply") ):
     renderer.import_mesh(argv.mesh_fpath, scale=1., object_world_matrix=obj_pose)
     renderer.render(instance_dir, blender_poses, write_cam_params=True)
 
 else:
     for file in os.listdir(argv.mesh_fpath):
-        if file.endswith(".fbx"):
+        if file.endswith(".obj") or file.endswith(".fbx") or file.endswith(".fbx"):
             renderer.import_mesh(argv.mesh_fpath + file, scale=1., object_world_matrix=obj_pose)
             folder_name = file[:-4]
             renderer.render(instance_dir + folder_name, blender_poses, write_cam_params=True)

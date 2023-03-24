@@ -1,23 +1,22 @@
 
 
-
+#ALL OWN CODE, FBX FILES RUN FASTER USING THIS SYSTEM THHAN BY RUNNING THE RENDERER
 import subprocess
 from pathlib import Path
 import sys
 
-
 if __name__ == "__main__":
-    mesh_folder = Path("C:/Users/G/GitHub/datasets/fbx_dataset/fbxtest/")
-    output_folder = Path("C:/Users/G/GitHub/datasets/fbx_dataset/fbxtest/outputs")
+    mesh_folder = Path("C:/Users/G/Downloads/towerdataset/fbx_81/train/")
+    output_folder = Path("C:/Users/G/Downloads/towerdataset/fbx_81/train/outputs")
 
     for filePath in mesh_folder.glob("*.fbx"):
         process = subprocess.Popen(args=[
             "python", "shapenet_spherical_renderer.py",
             "--mesh_fpath", filePath.resolve(),
             "--output_dir", output_folder.resolve(),
-            "--num_observations", "50",
+            "--num_observations", "150",
             "--sphere_radius", "1.5",
-            "--mode", "train"
+            "--mode", "test"
             ])
         
         (out, err) = process.communicate()

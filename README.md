@@ -13,20 +13,18 @@ To render a batch of ply files in parallel, just make sure to input a directory 
 ```
 conda create -n blender-render
 conda activate blender-render
+conda install python="3.10"
 ```
 3. Clone the repository:
 ```
 git clone https://github.com/gemyerst/shapenet_renderer.git
 ```
-4. Install the required dependencies:
+4. Install the required dependencies: (you will need chocolatey or similar: https://docs.chocolatey.org/en-us/)
 ```
 pip install numpy
-<<<<<<< HEAD
-pip install bpy
 pip install pillow
-=======
-pip install bpy "OR" pip install fake-bpy-module-latest
->>>>>>> 6fbd70868b04a4624392087aa40dfa7f72f0f190
+pip install bpy
+pip install fake-bpy-module-latest
 ```
 Note: bpy might require additional dependencies to work on your system. See https://pypi.org/project/bpy/2.82.1/
 
